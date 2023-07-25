@@ -7,6 +7,7 @@
 #include "VideoClient.h"
 #include "VideoClientDlg.h"
 #include "afxdialogex.h"
+#include "VideoClientController.h"
 
 #ifdef _DEBUG
 #define new DEBUG_NEW
@@ -22,6 +23,7 @@ CVideoClientDlg::CVideoClientDlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_status = false;
+	m_length = 0.0f;
 }
 
 void CVideoClientDlg::DoDataExchange(CDataExchange* pDX)
@@ -61,12 +63,13 @@ BOOL CVideoClientDlg::OnInitDialog()
 
 	// TODO: 在此添加额外的初始化代码
 	SetTimer(0, 500, NULL);
-	m_pos.SetRange(0, 100);
+	m_pos.SetRange(0, 1);
 	m_volume.SetRange(0, 100);
-	m_volume.SetTic(10);
 	m_volume.SetTicFreq(20);
 	SetDlgItemText(IDC_STATIC_VOLUME, _T("100%"));
 	SetDlgItemText(IDC_STATIC_POS, _T("--:--:--/--:--:--"));
+	m_controller->SetWnd(m_video.GetSafeHwnd());
+	m_url.SetWindowText(_T("file:///F:\\23mypractice3\\VideoPlay\\VideoClient\\股市讨论.mp4"));
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
 
@@ -112,7 +115,19 @@ void CVideoClientDlg::OnTimer(UINT_PTR nIDEvent)
 {
 	// TODO: 在此添加消息处理程序代码和/或调用默认值
 	if (nIDEvent == 0) {
-		//TODO:控制层, 获取播放状态, 进度信息
+		float pos = m_controller->VideoCtrl(IQVLC_GET_POSITION);
+		if (pos != -1.0f) {//更新播放进度
+			if (m_length <= 0.0f) {
+				m_length = m_controller->VideoCtrl(IQVLC_GET_LENGTH);
+			}
+			if (m_pos.GetRangeMax() <= 1) {
+				m_pos.SetRange(0, int(m_length));
+			}
+			CString strPos;
+			strPos.Format(_T("%f/%f"), pos * m_length, m_length);
+			SetDlgItemText(IDC_STATIC_POS, strPos);
+			m_pos.SetPos(int(pos * m_length));
+		}
 	}
 	CDialogEx::OnTimer(nIDEvent);
 }
@@ -129,14 +144,17 @@ void CVideoClientDlg::OnDestroy()
 void CVideoClientDlg::OnBnClickedBtnPlay()
 {
 	if (m_status == false) {
+		CString url;
+		m_url.GetWindowText(url);
+		m_controller->SetMedia(m_controller->Unicode2Utf8((LPCTSTR)url));
 		m_btnPlay.SetWindowText(_T("暂停"));
 		m_status = true;
-		//TODO: Controller的播放接口
+		m_controller->VideoCtrl(IQVLC_PLAY);
 	}
 	else {
 		m_btnPlay.SetWindowText(_T("播放"));
 		m_status = false;
-		//TODO: Controller的暂停接口
+		m_controller->VideoCtrl(IQVLC_PAUSE);
 	}
 }
 
@@ -145,7 +163,7 @@ void CVideoClientDlg::OnBnClickedBtnStop()
 {
 	m_btnPlay.SetWindowText(_T("播放"));
 	m_status = false;
-	//TODO: Controller的结束接口
+	m_controller->VideoCtrl(IQVLC_STOP);
 }
 
 
@@ -169,7 +187,6 @@ void CVideoClientDlg::OnTRBNThumbPosChangingSliderVolume(NMHDR* pNMHDR, LRESULT*
 	*pResult = 0;
 }
 
-
 void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)//音量滑块控件被拖动
 {
 	if (nSBCode == SB_THUMBTRACK) {
@@ -177,10 +194,10 @@ void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		CString strVolume;
 		strVolume.Format(_T("%d%%"), 100 - nPos);
 		SetDlgItemText(IDC_STATIC_VOLUME, strVolume);
+		m_controller->SetVolume(100 - nPos);
 	}
 	CDialogEx::OnVScroll(nSBCode, nPos, pScrollBar);
 }
-
 
 void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)//进度条滑块控件被拖动
 {
@@ -189,6 +206,7 @@ void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 		CString strPos;
 		strPos.Format(_T("%d%%"), nPos);
 		SetDlgItemText(IDC_STATIC_POS, strPos);
+		m_controller->SetPosition(float(nPos) / m_length);
 	}
 	CDialogEx::OnHScroll(nSBCode, nPos, pScrollBar);
 }

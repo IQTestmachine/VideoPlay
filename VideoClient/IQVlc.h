@@ -30,20 +30,28 @@ class IQVlc
 public:
 	IQVlc();
 	~IQVlc();
-	//如果传入的url含义中文, 请使用UTF-8编码格式
+	//如果传入的url含有中文, 请使用UTF-8编码格式
 	int SetMedia(const std::string& strUrl);
+#ifdef WIN32
 	int SetHwnd(HWND hWnd);
+#endif
 	int Play();
 	int Pause();
 	int Stop();
+	float GetLength();
 	float GetPostion();
 	void SetPostion(float pos);
 	int GetVolume();
 	void SetVolume(int volume);
 	VlcSize GetMediaInfo();
+	std::string Unicode2Utf8(const std::wstring& strIn);
 protected:
 	libvlc_instance_t* m_instance;
 	libvlc_media_t* m_media;
 	libvlc_media_player_t* m_player;
+	std::string m_url;
+#ifdef WIN32
+	HWND m_hwnd;
+#endif
 };
 

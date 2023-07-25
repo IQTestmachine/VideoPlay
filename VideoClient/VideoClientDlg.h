@@ -3,7 +3,7 @@
 //
 
 #pragma once
-
+class VideoClientController;
 
 // CVideoClientDlg 对话框
 class CVideoClientDlg : public CDialogEx
@@ -36,13 +36,18 @@ public:
 	afx_msg void OnDestroy();
 	afx_msg void OnBnClickedBtnPlay();
 	afx_msg void OnBnClickedBtnStop();
+	
+	afx_msg void OnTRBNThumbPosChangingSliderPos(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnTRBNThumbPosChangingSliderVolume(NMHDR* pNMHDR, LRESULT* pResult);
+	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+protected:
 	CEdit m_url;
 	CEdit m_video;
 	CSliderCtrl m_pos;
 	CSliderCtrl m_volume;
 	CButton m_btnPlay;
-	afx_msg void OnTRBNThumbPosChangingSliderPos(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnTRBNThumbPosChangingSliderVolume(NMHDR* pNMHDR, LRESULT* pResult);
-	afx_msg void OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
-	afx_msg void OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar);
+	float m_length;
+public:
+	VideoClientController* m_controller;
 };
