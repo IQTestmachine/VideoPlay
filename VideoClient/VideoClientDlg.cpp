@@ -190,7 +190,7 @@ void CVideoClientDlg::OnTRBNThumbPosChangingSliderVolume(NMHDR* pNMHDR, LRESULT*
 void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)//音量滑块控件被拖动
 {
 	if (nSBCode == SB_THUMBTRACK) {
-		TRACE("pos %p volume %p cur %p pos %d code %d\r\n", &m_pos, &m_volume, pScrollBar, nPos, nSBCode);
+		//TRACE("pos %p volume %p cur %p pos %d code %d\r\n", &m_pos, &m_volume, pScrollBar, nPos, nSBCode);
 		CString strVolume;
 		strVolume.Format(_T("%d%%"), 100 - nPos);
 		SetDlgItemText(IDC_STATIC_VOLUME, strVolume);
@@ -202,7 +202,7 @@ void CVideoClientDlg::OnVScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)
 void CVideoClientDlg::OnHScroll(UINT nSBCode, UINT nPos, CScrollBar* pScrollBar)//进度条滑块控件被拖动
 {
 	if (nSBCode == SB_THUMBTRACK) {
-		TRACE("pos %p volume %p cur %p pos %d code %d\r\n", &m_pos, &m_volume, pScrollBar, nPos, nSBCode);
+		//TRACE("pos %p volume %p cur %p pos %d code %d\r\n", &m_pos, &m_volume, pScrollBar, nPos, nSBCode);
 		CString strPos;
 		strPos.Format(_T("%d%%"), nPos);
 		SetDlgItemText(IDC_STATIC_POS, strPos);
