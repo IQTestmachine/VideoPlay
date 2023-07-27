@@ -4,7 +4,7 @@
 #include <mutex>
 #include <Windows.h>
 #include <varargs.h>
-#include <atlstr.h>
+
 void IQTrace(const char* format, ...)
 {
 	va_list ap;
@@ -147,9 +147,7 @@ private:
 					int ret = worker();
 					if (ret != 0)
 					{
-						CString str;
-						str.Format(_T("thread found warning code %d\r\n"), ret);
-						OutputDebugString(str);
+						TRACE("thread found warning code %d%n", ret);
 					}
 					if (ret < 0)
 					{

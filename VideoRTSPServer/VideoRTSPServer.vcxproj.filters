@@ -32,5 +32,8 @@
     <ClInclude Include="IQtestmachineThread.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="IQtestmachineQueue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

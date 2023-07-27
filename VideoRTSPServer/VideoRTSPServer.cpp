@@ -10,5 +10,4 @@ int main()
     server.Invoke();
     getchar();
     server.Stop();
-    std::cout << "Hello World!\n";
 }
