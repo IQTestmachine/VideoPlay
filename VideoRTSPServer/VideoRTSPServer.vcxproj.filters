@@ -21,6 +21,9 @@
     <ClCompile Include="RTSPServer.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="MideaFile.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Socket.h">
@@ -33,6 +36,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="IQtestmachineQueue.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="MideaFile.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="base.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
