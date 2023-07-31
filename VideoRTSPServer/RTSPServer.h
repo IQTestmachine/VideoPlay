@@ -9,31 +9,69 @@ class RTSPRequest
 {
 public:
 	RTSPRequest();
-	RTSPRequest(const RTSPRequest& protoclo);
+	RTSPRequest(const RTSPRequest& protocol);
 	RTSPRequest& operator=(const RTSPRequest& protocol);
 	~RTSPRequest();
+	void SetMethod(const IQBuffer& method);
+	void SetUrl(const IQBuffer& url);
+	void SetSequence(const IQBuffer& seq);
+	void SetClientPort(int ports[]);
+	void SetSession(const IQBuffer& session);
+	int method() const { return m_method; }
+	const IQBuffer& url() const { return m_url; }
+	const IQBuffer& session() const { return m_session; }
+	const IQBuffer& sequence() const { return m_seq; }
+	const IQBuffer& port(int index = 0) const { return index ? m_client_port[1] : m_client_port[0]; }
 private:
 	int m_method;//0 OPTIONS 1 DESCRIBE 2 SETUP 3 PLAY 4 TEARDOWN
+	IQBuffer m_url;
+	IQBuffer m_session;
+	IQBuffer m_seq;
+	IQBuffer m_client_port[2];
 };
 
-class RTSPReply
-{
+class RTSPReply {
 public:
 	RTSPReply();
-	RTSPReply(const RTSPRequest& protoclo);
-	RTSPReply& operator=(const RTSPRequest& protocol);
-	~RTSPReply();
+	RTSPReply(const RTSPReply& protocol);
+	RTSPReply& operator=(const RTSPReply& protocol);
+	~RTSPReply() {}
 	IQBuffer toBuffer();
+	void SetMethod(int method);
+	void SetOptions(const IQBuffer& options);
+	void SetSequence(const IQBuffer& seq);
+	void SetSdp(const IQBuffer& sdp);
+	void SetClientPort(const IQBuffer& port0, const IQBuffer& port1);
+	void SetServerPort(const IQBuffer& port0, const IQBuffer& port1);
+	void SetSession(const IQBuffer& session);
 private:
 	int m_method;//0 OPTIONS 1 DESCRIBE 2 SETUP 3 PLAY 4 TEARDOWN
+	int m_client_port[2];
+	int m_server_port[2];
+	IQBuffer m_sdp;
+	IQBuffer m_options;
+	IQBuffer m_session;
+	IQBuffer m_seq;
 };
+
 class RTSPSession
 {
 public:
 	RTSPSession();
+	RTSPSession(const IQSocket& client);
 	RTSPSession(const RTSPSession& session);
-	RTSPSession& operator&(const RTSPSession& session);
+	RTSPSession& operator=(const RTSPSession& session);
+	int PickRequestAndReply();//接收数据请求, 解析请求, 应答请求
 	~RTSPSession();
+private:
+	IQBuffer PickOneLine(IQBuffer& buffer);
+	IQBuffer Pick();
+	RTSPRequest AnalyseRequest(const IQBuffer& buffer);
+	RTSPReply Reply(const RTSPRequest& request);
+private:
+	IQBuffer m_id;
+	IQSocket m_client;
+	short m_port;
 };
 
 class RTSPServer : public ThreadFuncBase
@@ -50,17 +88,14 @@ public:
 	~RTSPServer();
 protected:
 	int threadWorker();//返回0继续, 返回负数终止, 返回其他警告
-	RTSPRequest AnalyseRequest(const std::string& data);
-	RTSPReply MakeReplay(const RTSPRequest& request);
 	int ThreadSession();
 private:
+	static SocketIniter m_initer;
 	IQSocket m_socket;
 	IQAddress m_addr;
 	int m_status;//0 未初始化 1 初始化完成 2 正在运行 3 关闭
 	CIQtestmachineThread m_threadMain;
 	IQtestmachinePool m_pool;
-	std::map<std::string, RTSPSession> m_mapSession;
-	static SocketIniter m_initer;
-	CIQtestmachineQueue<IQSocket> m_clients;
+	CIQtestmachineQueue<RTSPSession> m_lstSession;
 };
 

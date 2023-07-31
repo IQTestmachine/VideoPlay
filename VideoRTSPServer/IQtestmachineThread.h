@@ -5,18 +5,21 @@
 #include <Windows.h>
 #include <varargs.h>
 
-void IQTrace(const char* format, ...)
-{
-	va_list ap;
-	va_start(ap, format);
-	std::string sBuffer;
-	sBuffer.resize(1024 * 10);
-	vsprintf((char*)sBuffer.c_str(), format, ap);
-	OutputDebugStringA(sBuffer.c_str());
-	va_end(ap);
-}
+class IQTool {
+public:
+	static void IQTrace(const char* format, ...) {
+		va_list ap;
+		va_start(ap, format);
+		std::string sBuffer;
+		sBuffer.resize(1024 * 10);
+		vsprintf((char*)(sBuffer.c_str()), format, ap);
+		OutputDebugStringA(sBuffer.c_str());
+		va_end(ap);
+	}
+};
+
 #ifndef TRACE
-#define TRACE IQTrace
+#define TRACE IQTool::IQTrace
 #endif
 
 class ThreadFuncBase
@@ -147,7 +150,7 @@ private:
 					int ret = worker();
 					if (ret != 0)
 					{
-						TRACE("thread found warning code %d%n", ret);
+						TRACE("thread found warning code %d\r\n", ret);
 					}
 					if (ret < 0)
 					{

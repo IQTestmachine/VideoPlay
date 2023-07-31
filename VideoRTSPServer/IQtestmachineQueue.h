@@ -2,6 +2,7 @@
 #include <atomic>
 #include <list>
 #include "IQtestmachineThread.h"
+#pragma warning(disable : 4996)
 
 template <class T>//线程安全的队列模板类(利用IOCP实现)
 class CIQtestmachineQueue

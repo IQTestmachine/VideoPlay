@@ -8,6 +8,7 @@ int main()
     RTSPServer server;
     server.Init();
     server.Invoke();
+    std::cout << "press any to stop..." << std::endl;
     getchar();
     server.Stop();
 }
