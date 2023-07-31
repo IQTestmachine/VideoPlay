@@ -4,6 +4,8 @@
 #include "IQtestmachineThread.h"
 #include <map>
 #include "IQtestmachineQueue.h"
+#include "MideaFile.h"
+#include "RTPHelper.h"
 
 class RTSPRequest
 {
@@ -54,6 +56,10 @@ private:
 	IQBuffer m_seq;
 };
 
+class RTSPSession;
+class RTSPServer;
+typedef void (*RTSPPLAYCB)(RTSPServer* thiz, RTSPSession& session);
+
 class RTSPSession
 {
 public:
@@ -61,7 +67,8 @@ public:
 	RTSPSession(const IQSocket& client);
 	RTSPSession(const RTSPSession& session);
 	RTSPSession& operator=(const RTSPSession& session);
-	int PickRequestAndReply();//接收数据请求, 解析请求, 应答请求
+	int PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz);//接收数据请求, 解析请求, 应答请求
+	IQAddress GetClientUDPAddress() const;
 	~RTSPSession();
 private:
 	IQBuffer PickOneLine(IQBuffer& buffer);
@@ -81,6 +88,7 @@ public:
 		: m_socket(true), m_status(0), m_pool(4)
 	{
 		m_threadMain.UpdataWorker(CThreadWorker(this, (FUNCTYPE)&RTSPServer::threadWorker));
+		m_h264.Open("./test.h264");
 	}
 	int Init(const std::string& strIP = "0.0.0.0", short port = 554);
 	int Invoke();
@@ -89,6 +97,8 @@ public:
 protected:
 	int threadWorker();//返回0继续, 返回负数终止, 返回其他警告
 	int ThreadSession();
+	static void PlayCallBack(RTSPServer* thiz, RTSPSession& session);
+	void UdpWorker(const IQAddress& client);
 private:
 	static SocketIniter m_initer;
 	IQSocket m_socket;
@@ -97,5 +107,7 @@ private:
 	CIQtestmachineThread m_threadMain;
 	IQtestmachinePool m_pool;
 	CIQtestmachineQueue<RTSPSession> m_lstSession;
+	RTPHelper m_helper;
+	MideaFile m_h264;
 };
 

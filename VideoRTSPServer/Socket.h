@@ -83,6 +83,7 @@ public:
 	operator sockaddr* () { return (sockaddr*)&m_addr; }
 	operator sockaddr_in* () { return &m_addr; }
 	int size()const { return sizeof(sockaddr_in); }
+	void Fresh() { m_ip = inet_ntoa(m_addr.sin_addr); }
 private:
 	std::string m_ip;
 	unsigned short m_port;

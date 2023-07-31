@@ -48,9 +48,24 @@ int RTSPServer::ThreadSession()
 {
     RTSPSession session;
     if (m_lstSession.PopFront(session)) {
-        return session.PickRequestAndReply();//接收数据请求, 解析请求, 应答请求
+        return session.PickRequestAndReply(RTSPServer::PlayCallBack, this);//接收数据请求, 解析请求, 应答请求
     }
     return -1;
+}
+
+void RTSPServer::PlayCallBack(RTSPServer* thiz, RTSPSession& session)
+{
+    thiz->UdpWorker(session.GetClientUDPAddress());
+}
+
+void RTSPServer::UdpWorker(const IQAddress& client)
+{
+    IQBuffer frame = m_h264.ReadOneFrame();
+    RTPFrame rtp;
+    while (frame.size() > 0) {
+        m_helper.SendMediaFrame(rtp, frame, client);
+        frame = m_h264.ReadOneFrame();
+    }
 }
 
 RTSPSession::RTSPSession()
@@ -88,7 +103,7 @@ RTSPSession& RTSPSession::operator=(const RTSPSession& session)
     return *this;
 }
 
-int RTSPSession::PickRequestAndReply()
+int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
 {
     int ret = -1;
     do {
@@ -103,11 +118,27 @@ int RTSPSession::PickRequestAndReply()
         }
         RTSPReply rep = Reply(req);
         ret = m_client.Send(rep.toBuffer());
+        if (req.method() == 2) {
+            m_port = (short)atoi(req.port());
+        }
+        if (req.method() == 3) {
+            cb(thiz, *this);
+        }
     } while (ret >= 0);
     if (ret < 0) {
         return ret;
     }
     return 0;
+}
+
+IQAddress RTSPSession::GetClientUDPAddress() const
+{
+    IQAddress addr;
+    int len = addr.size();
+    getsockname(m_client, addr, &len);
+    addr.Fresh();
+    addr = m_port;
+    return addr;
 }
 
 RTSPSession::~RTSPSession()

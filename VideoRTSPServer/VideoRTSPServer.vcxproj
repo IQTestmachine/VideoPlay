@@ -128,6 +128,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="MideaFile.cpp" />
+    <ClCompile Include="RTPHelper.cpp" />
     <ClCompile Include="RTSPServer.cpp" />
     <ClCompile Include="VideoRTSPServer.cpp" />
   </ItemGroup>
@@ -136,6 +137,7 @@
     <ClInclude Include="IQtestmachineQueue.h" />
     <ClInclude Include="IQtestmachineThread.h" />
     <ClInclude Include="MideaFile.h" />
+    <ClInclude Include="RTPHelper.h" />
     <ClInclude Include="RTSPServer.h" />
     <ClInclude Include="Socket.h" />
   </ItemGroup>
