@@ -58,7 +58,16 @@ private:
 
 class RTSPSession;
 class RTSPServer;
-typedef void (*RTSPPLAYCB)(RTSPServer* thiz, RTSPSession& session);
+
+struct PARAM
+{
+	RTSPServer* param1;
+	RTSPSession* param2;
+	PARAM() {
+		param1 = nullptr;
+		param2 = nullptr;
+	}
+};
 
 class RTSPSession
 {
@@ -67,8 +76,9 @@ public:
 	RTSPSession(const IQSocket& client);
 	RTSPSession(const RTSPSession& session);
 	RTSPSession& operator=(const RTSPSession& session);
-	int PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz);//接收数据请求, 解析请求, 应答请求
+	int PickRequestAndReply(/*RTSPPLAYCB cb, */RTSPServer* thiz);//接收数据请求, 解析请求, 应答请求
 	IQAddress GetClientUDPAddress() const;
+	bool Getm_bisexit() { return m_bisexit; }
 	~RTSPSession();
 private:
 	IQBuffer PickOneLine(IQBuffer& buffer);
@@ -79,6 +89,7 @@ private:
 	IQBuffer m_id;
 	IQSocket m_client;
 	short m_port;
+	bool m_bisexit;
 };
 
 class RTSPServer : public ThreadFuncBase
@@ -93,12 +104,19 @@ public:
 	int Init(const std::string& strIP = "0.0.0.0", short port = 554);
 	int Invoke();
 	void Stop();
+	MideaFile& Acquirem_h264() { return m_h264; }
+	static void ThreadEntry(void* arg) {
+		PARAM* param = (PARAM*)arg;
+		PlayCallBack(param->param1, *param->param2);
+		param->param1->Acquirem_h264().Reset();
+		_endthread();
+	}
 	~RTSPServer();
 protected:
 	int threadWorker();//返回0继续, 返回负数终止, 返回其他警告
 	int ThreadSession();
-	static void PlayCallBack(RTSPServer* thiz, RTSPSession& session);
-	void UdpWorker(const IQAddress& client);
+	static void PlayCallBack(RTSPServer *thiz, RTSPSession& session);
+	void UdpWorker(const IQAddress& client, RTSPSession& session);
 private:
 	static SocketIniter m_initer;
 	IQSocket m_socket;
@@ -110,4 +128,3 @@ private:
 	RTPHelper m_helper;
 	MideaFile m_h264;
 };
-

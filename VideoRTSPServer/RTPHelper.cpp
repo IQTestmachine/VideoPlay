@@ -61,7 +61,7 @@ int RTPHelper::GetFrameSepSize(IQBuffer& frame)
 int RTPHelper::SendFrame(const IQBuffer& frame, const IQAddress& client)
 {
 	int ret = sendto(m_udp, frame, frame.size(), 0, client, client.size());
-	return 0;
+	return ret;
 }
 
 RTPHeader::RTPHeader()

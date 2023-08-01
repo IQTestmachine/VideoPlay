@@ -48,21 +48,22 @@ int RTSPServer::ThreadSession()
 {
     RTSPSession session;
     if (m_lstSession.PopFront(session)) {
-        return session.PickRequestAndReply(RTSPServer::PlayCallBack, this);//接收数据请求, 解析请求, 应答请求
+        int ret = session.PickRequestAndReply(this);
+        return ret;
     }
     return -1;
 }
 
 void RTSPServer::PlayCallBack(RTSPServer* thiz, RTSPSession& session)
 {
-    thiz->UdpWorker(session.GetClientUDPAddress());
+    thiz->UdpWorker(session.GetClientUDPAddress(), session);
 }
 
-void RTSPServer::UdpWorker(const IQAddress& client)
+void RTSPServer::UdpWorker(const IQAddress& client, RTSPSession& session)
 {
     IQBuffer frame = m_h264.ReadOneFrame();
     RTPFrame rtp;
-    while (frame.size() > 0) {
+    while (session.Getm_bisexit() && frame.size() > 0) {
         m_helper.SendMediaFrame(rtp, frame, client);
         frame = m_h264.ReadOneFrame();
     }
@@ -70,6 +71,7 @@ void RTSPServer::UdpWorker(const IQAddress& client)
 
 RTSPSession::RTSPSession()
 {
+    m_bisexit = true;
     m_port = -1;
     UUID uuid;//创建一个128位的随机数
     UuidCreate(&uuid);
@@ -80,6 +82,7 @@ RTSPSession::RTSPSession()
 RTSPSession::RTSPSession(const IQSocket& client) 
     : m_client(client)
 {
+    m_bisexit = true;
     m_port = -1;
     //通过创建随机数的方式确定一个session的唯一ID
     UUID uuid;//创建一个128位的随机数
@@ -90,6 +93,7 @@ RTSPSession::RTSPSession(const IQSocket& client)
 
 RTSPSession::RTSPSession(const RTSPSession& session)
 {
+    m_bisexit = session.m_bisexit;
     m_id = session.m_id;
     m_client = session.m_client;
 }
@@ -97,13 +101,14 @@ RTSPSession::RTSPSession(const RTSPSession& session)
 RTSPSession& RTSPSession::operator=(const RTSPSession& session)
 {
     if (this != &session) {
+        m_bisexit = session.m_bisexit;
         m_id = session.m_id;
         m_client = session.m_client;
     }
     return *this;
 }
 
-int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
+int RTSPSession::PickRequestAndReply(RTSPServer* thiz)
 {
     int ret = -1;
     do {
@@ -122,7 +127,15 @@ int RTSPSession::PickRequestAndReply(RTSPPLAYCB cb, RTSPServer* thiz)
             m_port = (short)atoi(req.port());
         }
         if (req.method() == 3) {
-            cb(thiz, *this);
+            //cb(thiz, *this);
+            PARAM param;
+            param.param1 = thiz;
+            param.param2 = this;
+            _beginthread(&RTSPServer::ThreadEntry, 0, &param);
+        }
+        if (req.method() == 4) {
+            m_bisexit = false;
+            Sleep(100);
         }
     } while (ret >= 0);
     if (ret < 0) {
