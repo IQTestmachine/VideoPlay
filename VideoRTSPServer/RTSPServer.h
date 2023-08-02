@@ -59,16 +59,7 @@ private:
 class RTSPSession;
 class RTSPServer;
 
-struct PARAM
-{
-	RTSPServer* param1;
-	RTSPSession* param2;
-	PARAM() {
-		param1 = nullptr;
-		param2 = nullptr;
-	}
-};
-
+//这个类实现RTSP协议(该协议主要实现客户端播放请求-能否播放, 播放什么, 结束播放)与RTP协议(该协议实现视频数据的传输)
 class RTSPSession
 {
 public:
@@ -76,47 +67,46 @@ public:
 	RTSPSession(const IQSocket& client);
 	RTSPSession(const RTSPSession& session);
 	RTSPSession& operator=(const RTSPSession& session);
-	int PickRequestAndReply(/*RTSPPLAYCB cb, */RTSPServer* thiz);//接收数据请求, 解析请求, 应答请求
+	int PickRequestAndReply();//接收数据请求, 解析请求, 应答请求
 	IQAddress GetClientUDPAddress() const;
-	bool Getm_bisexit() { return m_bisexit; }
+	static void ThreadEntry(void* arg) {
+		RTSPSession* thiz = (RTSPSession*)arg;
+		thiz->UdpWorker();
+		_endthread();
+	}
 	~RTSPSession();
 private:
 	IQBuffer PickOneLine(IQBuffer& buffer);
 	IQBuffer Pick();
 	RTSPRequest AnalyseRequest(const IQBuffer& buffer);
 	RTSPReply Reply(const RTSPRequest& request);
+	void UdpWorker();
 private:
 	IQBuffer m_id;
 	IQSocket m_client;
 	short m_port;
 	bool m_bisexit;
+	MideaFile m_h264;
+	RTPHelper m_helper;
 };
 
-class RTSPServer : public ThreadFuncBase
+//这个类用于客户端的连接处理, 开启线程池
+//当客户端接入时, 会为根据客户端构造一个对应的会话(RTSPSession类对象), 并分配一个空闲的线程用于后续数据传输
+class RTSPServer : public ThreadFuncBase 
 {
 public:
 	RTSPServer()
 		: m_socket(true), m_status(0), m_pool(4)
 	{
 		m_threadMain.UpdataWorker(CThreadWorker(this, (FUNCTYPE)&RTSPServer::threadWorker));
-		m_h264.Open("./test.h264");
 	}
 	int Init(const std::string& strIP = "0.0.0.0", short port = 554);
 	int Invoke();
 	void Stop();
-	MideaFile& Acquirem_h264() { return m_h264; }
-	static void ThreadEntry(void* arg) {
-		PARAM* param = (PARAM*)arg;
-		PlayCallBack(param->param1, *param->param2);
-		param->param1->Acquirem_h264().Reset();
-		_endthread();
-	}
 	~RTSPServer();
 protected:
 	int threadWorker();//返回0继续, 返回负数终止, 返回其他警告
 	int ThreadSession();
-	static void PlayCallBack(RTSPServer *thiz, RTSPSession& session);
-	void UdpWorker(const IQAddress& client, RTSPSession& session);
 private:
 	static SocketIniter m_initer;
 	IQSocket m_socket;
@@ -125,6 +115,4 @@ private:
 	CIQtestmachineThread m_threadMain;
 	IQtestmachinePool m_pool;
 	CIQtestmachineQueue<RTSPSession> m_lstSession;
-	RTPHelper m_helper;
-	MideaFile m_h264;
 };

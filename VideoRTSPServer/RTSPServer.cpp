@@ -48,29 +48,16 @@ int RTSPServer::ThreadSession()
 {
     RTSPSession session;
     if (m_lstSession.PopFront(session)) {
-        int ret = session.PickRequestAndReply(this);
+        int ret = session.PickRequestAndReply();
         return ret;
     }
     return -1;
 }
 
-void RTSPServer::PlayCallBack(RTSPServer* thiz, RTSPSession& session)
-{
-    thiz->UdpWorker(session.GetClientUDPAddress(), session);
-}
-
-void RTSPServer::UdpWorker(const IQAddress& client, RTSPSession& session)
-{
-    IQBuffer frame = m_h264.ReadOneFrame();
-    RTPFrame rtp;
-    while (session.Getm_bisexit() && frame.size() > 0) {
-        m_helper.SendMediaFrame(rtp, frame, client);
-        frame = m_h264.ReadOneFrame();
-    }
-}
 
 RTSPSession::RTSPSession()
 {
+    m_h264.Open("./test.h264");
     m_bisexit = true;
     m_port = -1;
     UUID uuid;//创建一个128位的随机数
@@ -93,6 +80,7 @@ RTSPSession::RTSPSession(const IQSocket& client)
 
 RTSPSession::RTSPSession(const RTSPSession& session)
 {
+    m_h264 = session.m_h264;
     m_bisexit = session.m_bisexit;
     m_id = session.m_id;
     m_client = session.m_client;
@@ -101,6 +89,7 @@ RTSPSession::RTSPSession(const RTSPSession& session)
 RTSPSession& RTSPSession::operator=(const RTSPSession& session)
 {
     if (this != &session) {
+        m_h264 = session.m_h264;
         m_bisexit = session.m_bisexit;
         m_id = session.m_id;
         m_client = session.m_client;
@@ -108,7 +97,7 @@ RTSPSession& RTSPSession::operator=(const RTSPSession& session)
     return *this;
 }
 
-int RTSPSession::PickRequestAndReply(RTSPServer* thiz)
+int RTSPSession::PickRequestAndReply()
 {
     int ret = -1;
     do {
@@ -127,11 +116,7 @@ int RTSPSession::PickRequestAndReply(RTSPServer* thiz)
             m_port = (short)atoi(req.port());
         }
         if (req.method() == 3) {
-            //cb(thiz, *this);
-            PARAM param;
-            param.param1 = thiz;
-            param.param2 = this;
-            _beginthread(&RTSPServer::ThreadEntry, 0, &param);
+            _beginthread(&RTSPSession::ThreadEntry, 0, this);
         }
         if (req.method() == 4) {
             m_bisexit = false;
@@ -279,6 +264,18 @@ RTSPReply RTSPSession::Reply(const RTSPRequest& request)
         break;
     }
     return reply;
+}
+
+void RTSPSession::UdpWorker()
+{
+    m_h264.Open("./test.h264");
+    IQBuffer frame = m_h264.ReadOneFrame();
+    RTPFrame rtp;
+    while (m_bisexit && frame.size() > 0) {
+        m_helper.SendMediaFrame(rtp, frame, GetClientUDPAddress());
+        frame = m_h264.ReadOneFrame();
+    }
+    m_h264.Reset();
 }
 
 RTSPRequest::RTSPRequest()

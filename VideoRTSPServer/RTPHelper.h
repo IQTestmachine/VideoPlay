@@ -34,7 +34,7 @@ class RTPHelper//用于把h264解析来的数据帧分片并发送
 {
 public:
 	RTPHelper() :timestamp(0), m_udp(false) {
-		m_udp.Bind(IQAddress("0.0.0.0", (short)55000));
+		//m_udp.Bind(IQAddress("0.0.0.0", (short)55000));
 	}
 	~RTPHelper() {}
 	int SendMediaFrame(RTPFrame& rtpframe, IQBuffer& frame, const IQAddress& client);//把h264解析来的数据帧分片并发送
