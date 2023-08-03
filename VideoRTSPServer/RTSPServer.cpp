@@ -39,7 +39,10 @@ int RTSPServer::threadWorker()
     if (client != INVALID_SOCKET) {
         RTSPSession session(client);
         m_lstSession.PushBack(session);
-        m_pool.DispatchWorker(CThreadWorker(this, (FUNCTYPE)&RTSPServer::ThreadSession));
+        int ret = m_pool.DispatchWorker(CThreadWorker(this, (FUNCTYPE)&RTSPServer::ThreadSession));
+        if (ret < 0) {//如果线程池已满, 未能分配成功, 则从链表中弹出session, 代表拒绝本次客户端的连接服务
+            m_lstSession.PopFront(session);
+        }
     }
     return 0;
 }
