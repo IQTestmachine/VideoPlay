@@ -136,7 +136,8 @@ IQAddress RTSPSession::GetClientUDPAddress() const
 {
     IQAddress addr;
     int len = addr.size();
-    getsockname(m_client, addr, &len);
+    getpeername(m_client, addr, &len);
+    //getsockname(m_client, addr, &len);
     addr.Fresh();
     addr = m_port;
     return addr;
